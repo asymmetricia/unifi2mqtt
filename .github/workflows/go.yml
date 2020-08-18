@@ -1,0 +1,70 @@
+name: Go
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: [linux_amd64, linux_arm, windows_amd64, darwin_amd64]
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.15
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.15
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: build
+      run: |
+        go get -v -t -d ./...
+        go generate ./...
+        arch=${{matrix.arch}}
+        export GOOS=${arch%%_*} GOARCH=${arch##*_} GOARM=5
+        go build -o unifi2mqtt.$arch -v --ldflags="-s -X'main.version=${{ github.ref }}'" .
+    - name: upload-artifact unifi2mqtt
+      uses: actions/upload-artifact@v1
+      with:
+        name: unifi2mqtt.${{matrix.arch}}
+        path: unifi2mqtt.${{matrix.arch}}
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - id: create_release
+      name: Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+  assets:
+    name: Upload Assets
+    runs-on: ubuntu-latest
+    needs: release
+    strategy:
+      matrix:
+        arch: [linux_amd64, linux_arm, windows_amd64, darwin_amd64]
+        artifact: [unifi2mqtt]
+    steps:
+    - name: download ${{matrix.artifact}}.${{matrix.arch}}
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{matrix.artifact}}.${{matrix.arch}}
+        path: ./
+    - name: upload ${{matrix.artifact}}.${{matrix.arch}} to release
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ${{matrix.artifact}}.${{matrix.arch}}
+        asset_name: ${{matrix.artifact}}.${{matrix.arch}}
+        asset_content_type: application/octet-stream
