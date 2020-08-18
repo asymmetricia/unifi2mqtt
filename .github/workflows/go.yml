@@ -22,7 +22,7 @@ jobs:
         go generate ./...
         arch=${{matrix.arch}}
         export GOOS=${arch%%_*} GOARCH=${arch##*_} GOARM=5
-        go build -o unifi2mqtt.$arch -v --ldflags="-s -X'main.version=${{ github.ref }}'" .
+        go build -o unifi2mqtt.$arch -v --ldflags="-s -X 'main.version=${{ github.ref }}'" .
     - name: upload-artifact unifi2mqtt
       uses: actions/upload-artifact@v1
       with:
