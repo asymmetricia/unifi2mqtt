@@ -32,7 +32,7 @@ func NewMatchers(in []string) ([]*Matcher, error) {
 		if len(name) >= 2 && name[0] == '/' && name[len(name)-1] == '/' {
 			re, err := regexp.Compile(`(?i:` + name[1:len(name)-1] + `)`)
 			if err != nil {
-				return nil, fmt.Errorf("compiling %q as regexp: %w", err)
+				return nil, fmt.Errorf("compiling %q as regexp: %w", name[1:len(name)-1], err)
 			}
 			ret = append(ret, &Matcher{Regexp: re})
 		} else {
