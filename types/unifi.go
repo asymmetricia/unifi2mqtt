@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -24,9 +25,12 @@ type Unifi struct {
 	seenClients   map[string]string
 	unifiClient   *unifi.Unifi
 	ch            chan Client
+	loginBackoff  time.Duration
 }
 
 func (u *Unifi) Login(log zerolog.Logger) error {
+	time.Sleep(u.loginBackoff)
+
 	var err error
 	u.unifiClient, err = unifi.NewUnifi(&unifi.Config{
 		User:      u.Username,
@@ -40,6 +44,14 @@ func (u *Unifi) Login(log zerolog.Logger) error {
 			log.Debug().Msgf(msg, fmt...)
 		},
 	})
+
+	if err == nil {
+		u.loginBackoff = 0
+	} else if u.loginBackoff == 0 {
+		u.loginBackoff = time.Second
+	} else if u.loginBackoff < time.Minute {
+		u.loginBackoff *= 2
+	}
 
 	return err
 }
@@ -104,11 +116,23 @@ func NewUnifi(username, password, host string, port int, verifyTls bool,
 
 func (u *Unifi) clients(log zerolog.Logger) ([]Client, error) {
 	sites, err := u.unifiClient.GetSites()
+	if err != nil && strings.Contains(err.Error(), "code from server 401") {
+		err = u.Login(log)
+		if err == nil {
+			sites, err = u.unifiClient.GetSites()
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("getting sites: %w", err)
 	}
 
 	unifiClients, err := u.unifiClient.GetClients(sites)
+	if err != nil && strings.Contains(err.Error(), "code from server 401") {
+		err = u.Login(log)
+		if err == nil {
+			unifiClients, err = u.unifiClient.GetClients(sites)
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("getting clients: %w", err)
 	}
