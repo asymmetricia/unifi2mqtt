@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"golift.io/unifi"
+	"github.com/unpoller/unifi"
 )
 
 type Client struct {
@@ -143,7 +143,7 @@ clientLoop:
 	for _, client := range unifiClients {
 		for _, matcher := range u.Matchers {
 			if matcher.Match(client.Name) {
-				seen := time.Unix(client.LastSeen, 0)
+				seen := time.Unix(client.LastSeen.Int64(), 0)
 				log.Debug().Msgf("found client %s, MAC %s, Last Seen %s",
 					client.Name, client.Mac, seen)
 				if time.Since(seen) < u.DeviceTimeout {
