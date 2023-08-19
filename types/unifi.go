@@ -15,17 +15,18 @@ type Client struct {
 }
 
 type Unifi struct {
-	Username      string
-	Password      string
-	Host          string
-	Port          int
-	VerifyTls     bool
-	DeviceTimeout time.Duration
-	Matchers      []*Matcher
-	seenClients   map[string]string
-	unifiClient   *unifi.Unifi
-	ch            chan Client
-	loginBackoff  time.Duration
+	Username       string
+	Password       string
+	Host           string
+	Port           int
+	VerifyTls      bool
+	DeviceTimeout  time.Duration
+	ConnectTimeout time.Duration
+	Matchers       []*Matcher
+	seenClients    map[string]string
+	unifiClient    *unifi.Unifi
+	ch             chan Client
+	loginBackoff   time.Duration
 }
 
 func (u *Unifi) Login(log zerolog.Logger) error {
@@ -43,6 +44,7 @@ func (u *Unifi) Login(log zerolog.Logger) error {
 		DebugLog: func(msg string, fmt ...interface{}) {
 			log.Debug().Msgf(msg, fmt...)
 		},
+		Timeout: u.ConnectTimeout,
 	})
 
 	if err == nil {
@@ -93,18 +95,20 @@ func (u *Unifi) Start(log zerolog.Logger) error {
 }
 
 func NewUnifi(username, password, host string, port int, verifyTls bool,
-	deviceTimeout time.Duration, matchers []*Matcher, log zerolog.Logger,
+	deviceTimeout time.Duration, connectTimeout time.Duration,
+	matchers []*Matcher, log zerolog.Logger,
 ) (*Unifi, error) {
 	ret := &Unifi{
-		Username:      username,
-		Password:      password,
-		Host:          host,
-		Port:          port,
-		VerifyTls:     verifyTls,
-		DeviceTimeout: deviceTimeout,
-		Matchers:      matchers,
-		seenClients:   map[string]string{},
-		ch:            make(chan Client),
+		Username:       username,
+		Password:       password,
+		Host:           host,
+		Port:           port,
+		VerifyTls:      verifyTls,
+		DeviceTimeout:  deviceTimeout,
+		ConnectTimeout: connectTimeout,
+		Matchers:       matchers,
+		seenClients:    map[string]string{},
+		ch:             make(chan Client),
 	}
 
 	if err := ret.Start(log); err != nil {

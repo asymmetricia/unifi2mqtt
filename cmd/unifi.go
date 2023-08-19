@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/rs/zerolog"
 	"os"
+
+	"github.com/rs/zerolog"
 
 	"github.com/pdbogen/unifi2mqtt/types"
 	"github.com/spf13/cobra"
@@ -26,8 +27,9 @@ func startUnifi(cmd *cobra.Command, log zerolog.Logger) (<-chan types.Client, er
 	port, _ := cmd.Flags().GetInt("port")
 	verifyTls, _ := cmd.Flags().GetBool("verify-tls")
 	deviceTimeout, _ := cmd.Flags().GetDuration("unifi-timeout")
+	connectTimeout, _ := cmd.Flags().GetDuration("timeout")
 
-	u, err := types.NewUnifi(username, password, host, port, verifyTls, deviceTimeout, matchers, log)
+	u, err := types.NewUnifi(username, password, host, port, verifyTls, deviceTimeout, connectTimeout, matchers, log)
 	if err != nil {
 		return nil, fmt.Errorf("starting unifi client: %w", err)
 	}

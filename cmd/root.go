@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"github.com/rs/zerolog"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/spf13/cobra"
 )
@@ -23,6 +24,8 @@ func init() {
 	Root.Flags().String("host", "localhost", "hostname of the UniFi "+
 		"controller")
 	Root.Flags().Int("port", 8443, "UniFi controller port")
+	Root.Flags().Duration("timeout", 5*time.Second, "unifi server connection "+
+		"timeout")
 	Root.Flags().Bool("verify-tls", false, "if true, verify the TLS "+
 		"certificate of the UniFi controller")
 	Root.Flags().String("username", "", "login user on UniFi controller "+
