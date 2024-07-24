@@ -10,10 +10,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Go 1.21
+    - name: Set up Go 1.22.5
       uses: actions/setup-go@v1
       with:
-        go-version: 1.21
+        go-version: 1.22.5
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
     - name: build
