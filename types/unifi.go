@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -120,7 +121,7 @@ func NewUnifi(username, password, host string, port int, verifyTls bool,
 
 func (u *Unifi) clients(log zerolog.Logger) ([]Client, error) {
 	sites, err := u.unifiClient.GetSites()
-	if err != nil && strings.Contains(err.Error(), "code from server 401") {
+	if errors.Is(err, unifi.ErrInvalidStatusCode) && strings.Contains(err.Error(), "401") {
 		err = u.Login(log)
 		if err == nil {
 			sites, err = u.unifiClient.GetSites()
@@ -131,7 +132,7 @@ func (u *Unifi) clients(log zerolog.Logger) ([]Client, error) {
 	}
 
 	unifiClients, err := u.unifiClient.GetClients(sites)
-	if err != nil && strings.Contains(err.Error(), "code from server 401") {
+	if errors.Is(err, unifi.ErrInvalidStatusCode) && strings.Contains(err.Error(), "401") {
 		err = u.Login(log)
 		if err == nil {
 			unifiClients, err = u.unifiClient.GetClients(sites)
